@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+k8s
+test
+.envrc
+.envrc.example
+README.md

@@ -1,0 +1,15 @@
+# CONFIG
+export PORT=3000
+export PROVIDERS_PRIORITY="postmark sendgrid mailgun"
+export MAX_ATTEMPTS_PER_PROVIDER=2;
+export MAX_ATTEMPTS=6;
+
+# PROVIDER VARIABLES
+export PROVIDERS_PRIORITY="postmark sendgrid mailgun"
+export POSTMARK_CLIENT_API_KEY=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+export POSTMARK_EMAIL_FROM=santiago.yepes@cuemby.com
+export SENDGRID_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+export SENDGRID_EMAIL_FROM=santiago.yepes@cuemby.com
+export MAILGUN_API_KEY=key-XXXXXXXXXXXXXXXXXXXXXXX;
+export MAILGUN_DOMAIN='www.mydomain.com';
+export MAILGUN_EMAIL_FROM=santiago.yepes@cuemby.com

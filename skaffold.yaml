@@ -1,0 +1,30 @@
+apiVersion: skaffold/v2beta21
+kind: Config
+metadata:
+  name: email-service
+profiles:
+  - name: develop
+    build:
+      artifacts:
+        - image: node-email-service-v1
+          docker:
+            dockerfile: Dockerfile
+      local:
+        useDockerCLI: true
+    deploy:
+      kustomize:
+        paths:
+        - k8s/develop
+  - name: prod
+    build:
+      artifacts:
+        - image: gcr.io/cuemby-io-base/ccp/node-email-service-v1
+          docker:
+            dockerfile: Dockerfile
+      local:
+        useDockerCLI: false
+        useBuildkit: false
+    deploy:
+      kustomize:
+        paths:
+        - k8s/prod

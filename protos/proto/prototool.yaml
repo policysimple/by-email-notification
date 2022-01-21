@@ -1,0 +1,26 @@
+protoc:
+  version: 3.8.0
+lint:
+  group: uber2
+  rules:
+    remove:
+      - REQUEST_RESPONSE_NAMES_MATCH_RPC
+      - REQUEST_RESPONSE_TYPES_UNIQUE
+generate:
+  go_options:
+    import_path: gitlab.com/cuemby/core-components/back-end/proto-grpc-node-notification-email.git/proto
+  plugins:
+    - name: go
+      type: go
+      flags: plugins=grpc
+      output: ../generated/go
+    - name: grpc-gateway
+      type: go
+      output: ../generated/go
+    - name: java
+      output: ../generated/java
+    - name: python
+      output: ../generated/python
+    - name: grpc_python
+      path: grpc_python_plugin
+      output: ../generated/python

@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: v1alpha1-ccp-services
+
+bases:
+  - ../base
+
+namePrefix: cuemby-
+
+commonLabels:
+  lang: node
+  app: email-service
+
+images:
+  - name: node-email-service-v1
+    newName: gcr.io/cuemby-io-base/ccp/node-email-service-v1
+
+configMapGenerator:
+  - name: configmap-envs
+    behavior: merge
+    literals:
+      - PORT=50051
+      - MAX_ATTEMPTS_PER_PROVIDER=2
+      - MAX_ATTEMPTS=2
+      - PROVIDERS_PRIORITY="sendgrid"
+      - MAILGUN_DOMAIN=""
+
+secretGenerator:
+  - name: secrets-envs
+    behavior: merge
+    type: Opaque
+    files:
+      - SENDGRID_API_KEY=private/sendgrid_api_key.env
+      - SENDGRID_EMAIL_FROM=private/sendgrid_email_from.env
+      - POSTMARK_CLIENT_API_KEY=private/postmark_api_key.env
+      - POSTMARK_EMAIL_FROM=private/postmark_email_from.env
+      - MAILGUN_API_KEY=private/mailgun_api_key.env
+      - MAILGUN_EMAIL_FROM=private/mailgun_email_from.env

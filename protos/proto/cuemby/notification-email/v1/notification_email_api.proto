@@ -1,0 +1,74 @@
+// Copyright 2019 Cuemby, LLC
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+syntax="proto3";
+
+package cuemby.notificationemail.v1;
+
+option csharp_namespace = "Cuemby.Notificationemail.V1";
+option go_package = "cuemby/notificationemail/v1";
+option java_multiple_files = true;
+option java_outer_classname = "NotificationEmailApiProto";
+option java_package = "com.cuemby.notificationemail.v1";
+option objc_class_prefix = "CNX";
+option php_namespace = "Cuemby\\Notificationemail\\V1";
+
+// NotificationEmailAPI ...
+service NotificationEmailAPIService {
+    // SendEmail ...
+    rpc SendEmail (SendEmailRequest) returns (SendEmailResponse);
+}
+
+// To ...
+message To {
+    string name = 1;
+    string email = 2;
+}
+
+// Cc ...
+message Cc {
+    string name = 1;
+    string email = 2;
+}
+
+// Bbc ...
+message Bbc {
+    string name = 1;
+    string email = 2;
+}
+
+// ReplyTo ...
+message ReplyTo {
+    string name = 1;
+    string email = 2;
+}
+
+// SendEmailRequest ...
+message SendEmailRequest {
+    repeated To to = 1;
+    repeated Cc cc = 2;
+    repeated Bbc bbc = 3;
+    repeated ReplyTo reply_to = 4;
+    string subject = 5;
+    string tag = 6;
+    string text = 7;
+    string html = 8;
+}
+
+// SendEmailInfoResponse ...
+message SendEmailInfoResponse {
+    bool send = 1; 
+}
+
+// SendEmailResponse ...
+message SendEmailResponse {
+    string status = 1;
+    string message = 2;
+    SendEmailInfoResponse info = 3;
+    string error = 4;
+}
