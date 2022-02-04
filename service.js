@@ -3,7 +3,7 @@ const path = require('path');
 const { error, log } = console;
 const { name, version } = require("./package.json");
 const { emailDataValidation } = require('./validation');
-const PROTO_PATH = path.resolve(__dirname, './protos/proto/cuemby/notification-email/v1/notification_email_api.proto');
+const PROTO_PATH = path.resolve(__dirname, './node_modules/by-email-notification-sdk/proto/by/notificationemail/v1/by_email_notification.proto');
 
 const {
     PORT,
@@ -91,7 +91,6 @@ async function sendEmail(ctx) {
 }
 
 function main() {
-    console.log("URL: ", PROTO_PATH);
     const app = new Mali(PROTO_PATH)
     app.use({ sendEmail });
     app.start(`0.0.0.0:${PORT}`);

@@ -4,7 +4,7 @@ const sgMail = require('@sendgrid/mail');
 const { error, log } = console;
 const { standarize } = require("./utils");
 
-const send = async (configData, emailData) => {
+const send = async(configData, emailData) => {
 
     log('info@providers/sendgrid/index:send', 'The selected provider is SendGrid');
 
