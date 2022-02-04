@@ -1,4 +1,4 @@
-# grpc-node-notification-email
+# By Email Notification
 
 Service to send email notifications.
 

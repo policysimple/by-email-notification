@@ -1,3 +1,0 @@
-export NAME_IMAGE=buf-compiler
-export NAME_CONTAINER=compiler
-export DIR_LOCAL=`pwd`
