@@ -1,11 +1,11 @@
-FROM node:14.18.3-alpine3.15
+FROM --platform=linux/amd64 node:16.14.0-alpine3.15
 
-RUN mkdir -p /usr/src/app && apk add --no-cache bash curl
-RUN apk add --no-cache gcc g++ git openssh-client
+ARG REPO_PROTOS \
+    GITHUB_TOKEN
 
-COPY ./config /root/
-WORKDIR /root/.ssh/
-RUN chmod 700 *
+RUN apk update upgrade
+RUN mkdir -p /usr/src/app && apk add --no-cache bash curl gcc g++ git openssh-client ca-certificates && \
+    git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@${REPO_PROTOS}".insteadOf "https://${REPO_PROTOS}"
 
 WORKDIR /usr/src/app
 

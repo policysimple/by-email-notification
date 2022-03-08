@@ -4,3 +4,5 @@
 
 config
 .envrc
+
+.DS_Store

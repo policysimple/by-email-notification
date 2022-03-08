@@ -9,6 +9,9 @@ profiles:
         - image: node-email-service-v1
           docker:
             dockerfile: Dockerfile
+            buildArgs:
+              GITHUB_TOKEN: '{{.GITHUB_TOKEN}}'
+              REPO_PROTOS: '{{.REPO_PROTOS}}'
       local:
         useDockerCLI: true
     deploy:
@@ -21,6 +24,9 @@ profiles:
         - image: gcr.io/cuemby-io-base/ccp/node-email-service-v1
           docker:
             dockerfile: Dockerfile
+            buildArgs:
+              GITHUB_TOKEN: '{{.GITHUB_TOKEN}}'
+              REPO_PROTOS: '{{.REPO_PROTOS}}'
       local:
         useDockerCLI: false
         useBuildkit: false

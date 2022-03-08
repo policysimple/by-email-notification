@@ -30,7 +30,7 @@ async function sendEmail(ctx) {
         const validation = emailDataValidation.validate(data);
 
         if (validation.error) {
-
+            console.log("error payload: ", validation.error)
             throw new Error('Error in the payload');
 
         }
@@ -55,7 +55,7 @@ async function sendEmail(ctx) {
 
                 const { send } = require(`./providers/${providers[indexProvider].toLowerCase()}/index.js`);
                 log('log@service.js:sendEmail: sending email: ', `attempt ${attempts}`);
-                const resultSend = await send(process.env, data);
+                const resultSend = await send(process.env, data["emailData"]);
                 wasSent = true;
 
             } catch (err) {
