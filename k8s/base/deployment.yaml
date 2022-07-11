@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: email-service
-          image: node-email-service-v1
+          image: ccp-image
           imagePullPolicy: IfNotPresent     
           ports:
             - containerPort: 50051
