@@ -6,7 +6,7 @@ profiles:
   - name: develop
     build:
       artifacts:
-        - image: node-email-service-v1
+        - image: harbor.ccpadmin.cuemby.io/ccp-development/by-email-notification
           docker:
             dockerfile: Dockerfile
             buildArgs:
@@ -14,23 +14,8 @@ profiles:
               REPO_PROTOS: '{{.REPO_PROTOS}}'
       local:
         useDockerCLI: true
+        useBuildkit: true
     deploy:
       kustomize:
         paths:
         - k8s/develop
-  - name: prod
-    build:
-      artifacts:
-        - image: gcr.io/cuemby-io-base/ccp/node-email-service-v1
-          docker:
-            dockerfile: Dockerfile
-            buildArgs:
-              GITHUB_TOKEN: '{{.GITHUB_TOKEN}}'
-              REPO_PROTOS: '{{.REPO_PROTOS}}'
-      local:
-        useDockerCLI: false
-        useBuildkit: false
-    deploy:
-      kustomize:
-        paths:
-        - k8s/prod

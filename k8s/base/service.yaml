@@ -5,7 +5,7 @@ metadata:
   labels:
     app: email-service
 spec:
-  clusterIP: 10.4.2.128
+  #clusterIP: 10.4.2.128
   ports:
     - port: 50051
       protocol: TCP
