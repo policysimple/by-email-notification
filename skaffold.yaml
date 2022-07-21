@@ -19,3 +19,19 @@ profiles:
       kustomize:
         paths:
         - k8s/develop
+  - name: staging
+    build:
+      artifacts:
+        - image: harbor.admin.staging.cuemby.io/ccp-staging/by-email-notification
+          docker:
+            dockerfile: Dockerfile
+            buildArgs:
+              GITHUB_TOKEN: '{{.GITHUB_TOKEN}}'
+              REPO_PROTOS: '{{.REPO_PROTOS}}'
+      local:
+        useDockerCLI: true
+        useBuildkit: true
+    deploy:
+      kustomize:
+        paths:
+        - k8s/staging
