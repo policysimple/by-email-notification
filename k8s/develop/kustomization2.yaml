@@ -1,10 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: ccp-services
+namespace: ccp-dev
 
 bases:
-  - ../base
+  - ./base
 
 namePrefix: cuemby-
 
@@ -14,7 +14,7 @@ commonLabels:
 
 images:
   - name: ccp-image
-    newName: harbor.ccpadmin.cuemby.io/ccp-development/by-email-notification
+    newName: cuemby/by-email-notification
 
 configMapGenerator:
   - name: configmap-envs

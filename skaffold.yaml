@@ -6,7 +6,7 @@ profiles:
   - name: develop
     build:
       artifacts:
-        - image: harbor.ccpadmin.cuemby.io/ccp-development/by-email-notification
+        - image: cuemby/y
           docker:
             dockerfile: Dockerfile
             buildArgs:
