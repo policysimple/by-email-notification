@@ -8,7 +8,6 @@ on:
 env:
   REGISTRY: hub.docker.com
 
-
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
