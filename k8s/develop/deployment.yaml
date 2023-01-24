@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: email-service-deployment
+  namespace: ccp-developer
 spec:
   selector:
    matchLabels:
@@ -14,7 +15,7 @@ spec:
     spec:
       containers:
         - name: email-service
-          image: cueby/email-notification:dev
+          image: cueby/email-notification:1
           imagePullPolicy: IfNotPresent     
           ports:
             - containerPort: 50051
@@ -26,3 +27,6 @@ spec:
             requests:
               memory: 256Mi
               cpu: "0.05"
+          envFrom:
+            - secretRef:
+                name: email-service-secrets

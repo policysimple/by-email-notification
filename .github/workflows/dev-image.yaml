@@ -25,29 +25,6 @@ jobs:
       with:
         username: ${{ secrets.PSW_DOCKER_USER }}
         password: ${{ secrets.PSW_DOCKER }}
-
-    - name: clone submodule
-      uses: actions/checkout@v3
-      with:
-        repository: cuemby/ccp-sdk.git
-        ref: "dev"
-        token: ${{ secrets.DEPLOY_VAULT }}
-        path: ccp-sdk
-
-    - name: clone submodule
-      uses: actions/checkout@v3
-      with:
-        repository: cuemby/by-go-utils.git
-        ref: "dev-1"
-        token: ${{ secrets.DEPLOY_VAULT }}
-        path: by-go-utils
-
-    - name: temp modify go.mod
-      run: |
-        echo "replace github.com/cuemby/ccp-sdk  => ./ccp-sdk" >> go.mod
-        echo "replace github.com/cuemby/by-go-utils  => ./by-go-utils" >> go.mod
-        echo "doneccp-sdk"
-
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v3
@@ -55,4 +32,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: cuemby/ccp-email-notification-service:dev
+        tags: cuemby/ccp-email-notification-service:1
