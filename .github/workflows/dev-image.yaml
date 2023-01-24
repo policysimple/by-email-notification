@@ -39,4 +39,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: cuemby/ccp-email-notification-service:1
+        tags: cuemby/ccp-email-notification-service:2
