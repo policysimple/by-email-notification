@@ -25,6 +25,14 @@ jobs:
         username: ${{ secrets.USER }}
         password: ${{ secrets.PSWRGS }}
     
+    - name: clone submodule
+      uses: actions/checkout@v3
+      with:
+        repository: cuemby/by-email-notification-sdk.git
+        ref: "master"
+        token: ${{ secrets.DEPLOY_SERVICES_ARGOCD }}
+        path: by-email-notification-sdk
+    
     - name: Build and push Docker image
       uses: docker/build-push-action@v3
       with:
