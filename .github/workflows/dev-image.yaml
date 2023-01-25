@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-        - "iariza/fix/argocd"
+        - "persians/fix/argocd"
 
 env:
   REGISTRY: hub.docker.com
