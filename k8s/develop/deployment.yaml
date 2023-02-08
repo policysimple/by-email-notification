@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: email-service
-          image: cuemby/ccp-email-notification-service:7
+          image: cuemby/ccp-email-notification-service:8
           imagePullPolicy: IfNotPresent     
           ports:
             - containerPort: 50051
