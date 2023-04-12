@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: email-service-deployment
-  namespace: ccp-developer
+  namespace: ccp
 spec:
   selector:
    matchLabels:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: email-service
-          image: cuemby/ccp-email-notification-service:10
+          image: cuemby/ccp-email-notification-service:v0.0.1
           imagePullPolicy: IfNotPresent     
           ports:
             - containerPort: 50051
