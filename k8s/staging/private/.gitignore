@@ -1,6 +1,0 @@
-sendgrid_api_key.env
-sendgrid_email_from.env
-mailgun_api_key.env
-mailgun_email_from.env
-postmark_api_key.env
-postmark_email_from.env

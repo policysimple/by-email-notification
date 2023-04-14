@@ -1,13 +1,12 @@
 FROM --platform=linux/amd64 node:16.14.0-alpine3.15
 
-ARG REPO_PROTOS
-ARG GITHUB_TOKEN
+WORKDIR "/app"
+RUN apk add --no-cache git ca-certificates
 
-RUN apk update upgrade
-RUN mkdir -p /usr/src/app && apk add --no-cache bash curl gcc g++ git openssh-client ca-certificates && \
-    git config --global url."https://${GITHUB_TOKEN}:x-oauth-basic@${REPO_PROTOS}".insteadOf "https://${REPO_PROTOS}"
-
-WORKDIR /usr/src/app
+ENV go env -w GO111MODULE=on
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=amd64
 
 COPY . .
 
