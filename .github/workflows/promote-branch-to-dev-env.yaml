@@ -107,6 +107,13 @@ jobs:
         with:
           ref: "dev"
           token: ${{ secrets.GH_TOKEN }}
+      - name: clone submodule
+        uses: actions/checkout@v3
+        with:
+          repository: cuemby/by-email-notification-sdk.git
+          ref: "master"
+          token: ${{ secrets.GH_TOKEN }}
+          path: by-email-notification-sdk
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
