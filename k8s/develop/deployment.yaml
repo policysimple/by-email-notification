@@ -7,7 +7,6 @@ spec:
   selector:
     matchLabels:
       app: email-service
-  replicas: 1
   template:
     metadata:
       labels:
@@ -15,7 +14,7 @@ spec:
     spec:
       containers:
         - name: email-service
-          image: cuemby/ccp-email-notification-service:v1.0.0
+          image: cuemby/ccp-email-notification-service:v0.0.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50051
