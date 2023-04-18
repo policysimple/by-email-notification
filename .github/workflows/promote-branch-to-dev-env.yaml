@@ -1,0 +1,173 @@
+name: Promote project in feature branch to dev environment (create GitHub tag and push to Docker Registry)
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types: [closed]
+
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  ORGANIZATION_NAME: ${{ vars.ORGANIZATION_NAME }}
+  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+  GH_REPO_OWNER: ${{ github.repository_owner }}
+  GH_REPO_NAME: ${{ github.event.repository.name }}
+  GH_USERNAME: ${{ github.actor }}
+
+jobs:
+  global-outputs:
+    runs-on: ubuntu-latest
+    outputs:
+      release_branch: dev # All the jobs that use the branch name should depend on this "global-outputs" job
+    steps:
+      - name: Set branch name into GITHUB Outputs
+        run: |
+          echo "Description: This step is used to setup environment variables, you can use the steps of this job as needed to setup new variables."
+
+  check-dockerfile-existance:
+    needs: global-outputs
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.global-outputs.outputs.release_branch }}
+
+      - name: "Check if Dockerfile exists (fail if it doesn't)"
+        run: |
+          if  ! [ -f "Dockerfile" ]; then
+            echo "::error title='Dockerfile does not exist but it is required to proceed with this action'";
+            exit 1;
+          fi
+
+  generate-semver-tag-number:
+    needs: 
+      - global-outputs
+      - check-dockerfile-existance
+
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semver.outputs.version }}
+      version_tag: ${{ steps.semver.outputs.version_tag }}
+      version_type: ${{ steps.semver.outputs.version_type }}
+      increment: ${{ steps.semver.outputs.increment }}
+      current_commit: ${{ steps.semver.outputs.current_commit }}
+      previous_commit: ${{ steps.semver.outputs.previous_commit }}
+      previous_version: ${{ steps.semver.outputs.previous_version }}
+      changed: ${{ steps.semver.outputs.changed }}
+      is_tagged: ${{ steps.semver.outputs.is_tagged }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check that all tags have been brought from remote
+        run: |
+          echo "Will show all Git tags for the \"$GH_REPO_NAME\" repo "
+          echo "$(git tag)"
+      - name: semver
+        id: semver
+        uses: paulhatch/semantic-version@v5.0.3
+        with:
+          tag_prefix: "v"
+          version_format: "v${major}.${minor}.${patch}"
+          major_pattern: '(MAJOR)'
+          minor_pattern: '(MINOR)'
+
+  create-github-tag:
+    needs: generate-semver-tag-number
+    runs-on: ubuntu-latest
+    permissions: write-all
+    env:
+      VERSION: ${{ needs.generate-semver-tag-number.outputs.version }}
+      VERSION_TAG: ${{ needs.generate-semver-tag-number.outputs.version_tag }}
+      VERSION_TYPE: ${{ needs.generate-semver-tag-number.outputs.version_type }}
+      INCREMENT: ${{ needs.generate-semver-tag-number.outputs.increment }}
+      CURRENT_COMMIT: ${{ needs.generate-semver-tag-number.outputs.current_commit }}
+      PREVIOUS_COMMIT: ${{ needs.generate-semver-tag-number.outputs.previous_commit }}
+      PREVIOUS_VERSION: ${{ needs.generate-semver-tag-number.outputs.previous_version }}
+      CHANGED: ${{ needs.generate-semver-tag-number.outputs.changed }}
+      IS_TAGGED: ${{ needs.generate-semver-tag-number.outputs.is_tagged }}
+
+    steps:
+      - name: Print tag creation info
+        run: |
+            echo "version: \"${{ env.VERSION }}\""
+            echo "version_tag: \"${{ env.VERSION_TAG }}\""
+            echo "version_type: \"${{ env.VERSION_TYPE }}\""
+            echo "The increment is \"${{ env.INCREMENT }}\""
+            echo "current_commit: ${{ env.CURRENT_COMMIT }}"
+            echo "previous_commit: ${{ env.PREVIOUS_COMMIT }}"
+            echo "previous_version: ${{ env.PREVIOUS_VERSION }}"
+            echo "changed: ${{ env.CHANGED }}"
+            echo "is_tagged -> ${{ env.IS_TAGGED }}"
+      
+      - name: Create tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { VERSION } = process.env
+            console.log(`VERSION is: "${VERSION}"`)
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${VERSION}`,
+              sha: context.sha
+            })
+
+  create-image-name:
+    runs-on: ubuntu-latest
+    needs: 
+      - generate-semver-tag-number
+      - create-github-tag
+      - global-outputs
+    outputs:
+      docker_image_name: ${{ steps.set-image-name.outputs.DOCKER_IMAGE_NAME }}
+    steps:
+      - name: Set the name of image to be built
+        id: set-image-name
+        env:
+          VERSION_TAG: ${{ needs.generate-semver-tag-number.outputs.version_tag }}
+          VERSION: ${{ needs.generate-semver-tag-number.outputs.version }}
+          RELEASE_BRANCH: ${{needs.global-outputs.outputs.release_branch}}
+        run: |
+          echo "Version Tag: $VERSION_TAG"
+          echo "Version: $VERSION"
+          echo "set docker image name"
+          echo "DOCKER_IMAGE_NAME=$(echo $ORGANIZATION_NAME/$GH_REPO_NAME:$VERSION-$RELEASE_BRANCH)" >> $GITHUB_OUTPUT
+
+  build-push-image:
+    runs-on: ubuntu-latest
+    needs:
+      - global-outputs
+      - generate-semver-tag-number
+      - create-image-name
+    env:
+      DOCKER_IMAGE_NAME: ${{ needs.create-image-name.outputs.docker_image_name }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: echo docker_image_name
+        run: echo "${{ env.DOCKER_IMAGE_NAME }}"
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.global-outputs.outputs.release_branch }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_IMAGE_NAME }}
+

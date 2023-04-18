@@ -5,9 +5,8 @@ metadata:
   namespace: ccp
 spec:
   selector:
-   matchLabels:
-    app: email-service
-  replicas: 1
+    matchLabels:
+      app: email-service
   template:
     metadata:
       labels:
@@ -16,17 +15,17 @@ spec:
       containers:
         - name: email-service
           image: cuemby/ccp-email-notification-service:v0.0.1
-          imagePullPolicy: IfNotPresent     
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50051
               name: emailport
           resources:
             limits:
               memory: 512Mi
-              cpu: "0.1"
+              cpu: '0.1'
             requests:
               memory: 256Mi
-              cpu: "0.05"
+              cpu: '0.05'
           envFrom:
             - secretRef:
                 name: email-service-secrets
