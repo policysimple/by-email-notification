@@ -3,7 +3,7 @@ name: Promote project in feature branch to dev environment (deploy dev branch)
 on:
   pull_request:
     branches:
-      - persians/fix/argocd
+      - dev
     types: [closed]
       # TODO: Esta accion fue pensada para trabajar con una rama especifica al hacer merge, no con dos.
       # esta modificación recién se hizo en abril 27 y para funcionar adecuadamente requiere un refactor del action.
@@ -39,8 +39,8 @@ env:
   GH_REPO_NAME: ${{ github.event.repository.name }}
   GH_USER_EMAIL: ${{ github.actor }}
   GH_USERNAME: ${{ github.actor }}
-  RELEASE_BRANCH: persians/fix/argocd # name of branch to be checked out from this repo
-  RELEASE_BRANCH_DOCKER_ALIAS: persians--fix--argocd # name of the branch in the Docker Registry published image (should be a valid Docker tag)
+  RELEASE_BRANCH: dev # name of branch to be checked out from this repo
+  RELEASE_BRANCH_DOCKER_ALIAS: dev # name of the branch in the Docker Registry published image (should be a valid Docker tag)
 
 jobs:
   check-dockerfile-existance:
