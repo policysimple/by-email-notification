@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: performance-logs-service-deployment
+  namespace: ccp
+spec:
+  selector:
+    matchLabels:
+      app: performance-logs-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: performance-logs-service
+    spec:
+      containers:
+        - name: performance-logs-service
+          image: cuemby/ccp-performancelogs-service:v0.0.1-persians--fix--argocd
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "0.1"
+            requests:
+              memory: 256Mi
+              cpu: "0.05"
+          envFrom:
+            - secretRef:
+                name: performance-logs-service-secrets
+        - name: container-sample-name
+          image: sample-corp/sample-image-name:v1.0.25-dev
