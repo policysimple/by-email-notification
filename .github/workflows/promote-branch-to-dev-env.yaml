@@ -192,9 +192,6 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           path: by-email-notification-sdk
 
-      - name: temp modify go.mod
-        run: |
-          echo "replace github.com/cuemby/by-email-notification-sdk  => ./by-email-notification-sdk" >> go.mod
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
