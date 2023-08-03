@@ -1,0 +1,283 @@
+name: Promote project in feature branch to staging environment (deploy staging branch)
+
+on:
+  pull_request:
+    branches:
+      - staging
+    types: [closed]
+      # TODO: Esta accion fue pensada para trabajar con una rama especifica al hacer merge, no con dos.
+      # esta modificación recién se hizo en abril 27 y para funcionar adecuadamente requiere un refactor del action.
+      #
+      # Sugiero que se detecte la rama de la cuál el PR fue cerrado en los eventos de GitHub y se utilice
+      # esa información para establecer dinámicamente el valor de las variables de ambiente:
+      # "RELEASE_BRANCH" y "RELEASE_BRANCH_DOCKER_ALIAS", si se hace esto correctamente no se requieren más cambios
+      # en esta action.
+      #
+      # Adicionalmente, se sugiere que el nombre de la rama en la variable "RELEASE_BRANCH_DOCKER_ALIAS" se
+      # setee sin ningún guión, una estrategia que funciona bien para ramas similares a "persians/fix/argocd"
+      # es usar un nombre con la siguiente estructura: "persians--fix--argocd", se emplean dos guiones para
+      # denotar que reemplazan un slash "/". NO se usa un solo guión por amigüedad entre reconocer la separación
+      # del nombre de la versión (Ej: v1.2.34) y el nombre de la rama (Ej: "persians/feature/argocd").
+      #
+      # Usándo la fórmula sugerida el nombre completo de la imagen del ejemplo anterior sería el siguiente:
+      # "cuemby/ccp-performancelogs-service:v1.2.34-persians--fix--argocd".
+      #
+      # Otra opción sería la siguiente (menos legible, menos ideal, aunque posiblemente más común).
+      # "cuemby/ccp-performancelogs-service:v1.2.34-persians-fix-argocd"
+      #
+      # Lo que se busca evitar con estas dos variables es evitar un nombre inválido de imagen como el siguiente:
+      # "cuemby/ccp-performancelogs-service:v1.2.34-persians/fix/argocd" puesto que no pasaría el comando "docker build".
+      #
+    #
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  DOCKERHUB_USERNAME: "cuembybot"
+  ORGANIZATION_NAME: ${{ vars.ORGANIZATION_NAME }}
+  GH_REPO_OWNER: ${{ github.repository_owner }}
+  GH_REPO_NAME: ${{ github.event.repository.name }}
+  GH_USER_EMAIL: ${{ github.actor }}
+  GH_USERNAME: ${{ github.actor }}
+  RELEASE_BRANCH: staging # name of branch to be checked out from this repo
+  RELEASE_BRANCH_DOCKER_ALIAS: staging # name of the branch in the Docker Registry published image (should be a valid Docker tag)
+
+jobs:
+  check-dockerfile-existance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          token: ${{ secrets.GH_TOKEN }}
+      - name: "Check if Dockerfile exists (fail if it doesn't)"
+        run: |
+          if  ! [ -f "Dockerfile" ]; then
+            echo "::error title='Dockerfile does not exist but it is required to proceed with this action'";
+            exit 1;
+          fi
+
+  generate-semver-tag-number:
+    needs:
+      - check-dockerfile-existance
+
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semver.outputs.version }}
+      version_tag: ${{ steps.semver.outputs.version_tag }}
+      version_type: ${{ steps.semver.outputs.version_type }}
+      increment: ${{ steps.semver.outputs.increment }}
+      current_commit: ${{ steps.semver.outputs.current_commit }}
+      previous_commit: ${{ steps.semver.outputs.previous_commit }}
+      previous_version: ${{ steps.semver.outputs.previous_version }}
+      changed: ${{ steps.semver.outputs.changed }}
+      is_tagged: ${{ steps.semver.outputs.is_tagged }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check that all tags have been brought from remote
+        run: |
+          echo "Will show all Git tags for the \"$GH_REPO_NAME\" repo "
+          echo "$(git tag)"
+      - name: semver
+        id: semver
+        uses: paulhatch/semantic-version@v5.0.3
+        with:
+          tag_prefix: "v"
+          version_format: "v${major}.${minor}.${patch}" # This oftenly fails so "increment" will be used instead. If increment fails, use this line instead...
+          # version_format: "v${major}.${minor}.${increment}" # This method should be used only if the method above is producing a lot of problems.
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+
+  create-github-tag:
+    needs: generate-semver-tag-number
+    runs-on: ubuntu-latest
+    permissions: write-all
+    env:
+      VERSION: ${{ needs.generate-semver-tag-number.outputs.version }}
+      VERSION_TAG: ${{ needs.generate-semver-tag-number.outputs.version_tag }}
+      VERSION_TYPE: ${{ needs.generate-semver-tag-number.outputs.version_type }}
+      INCREMENT: ${{ needs.generate-semver-tag-number.outputs.increment }}
+      CURRENT_COMMIT: ${{ needs.generate-semver-tag-number.outputs.current_commit }}
+      PREVIOUS_COMMIT: ${{ needs.generate-semver-tag-number.outputs.previous_commit }}
+      PREVIOUS_VERSION: ${{ needs.generate-semver-tag-number.outputs.previous_version }}
+      CHANGED: ${{ needs.generate-semver-tag-number.outputs.changed }}
+      IS_TAGGED: ${{ needs.generate-semver-tag-number.outputs.is_tagged }}
+
+    steps:
+      - name: Print tag creation info
+        run: |
+          echo "version: \"${{ env.VERSION }}\""
+          echo "version_tag: \"${{ env.VERSION_TAG }}\""
+          echo "version_type: \"${{ env.VERSION_TYPE }}\""
+          echo "The increment is \"${{ env.INCREMENT }}\""
+          echo "current_commit: ${{ env.CURRENT_COMMIT }}"
+          echo "previous_commit: ${{ env.PREVIOUS_COMMIT }}"
+          echo "previous_version: ${{ env.PREVIOUS_VERSION }}"
+          echo "changed: ${{ env.CHANGED }}"
+          echo "is_tagged -> ${{ env.IS_TAGGED }}"
+
+      - name: Create tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { VERSION } = process.env;
+            console.log(`VERSION is: "${VERSION}"`);
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${VERSION}`,
+              sha: context.sha
+            });
+
+  create-image-name:
+    runs-on: ubuntu-latest
+    needs:
+      - generate-semver-tag-number
+      - create-github-tag
+    outputs:
+      docker_image_name: ${{ steps.set-image-name.outputs.DOCKER_IMAGE_NAME }}
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+    steps:
+      - name: Set the name of image to be built
+        id: set-image-name
+        env:
+          VERSION_TAG: ${{ needs.generate-semver-tag-number.outputs.version_tag }}
+          VERSION: ${{ needs.generate-semver-tag-number.outputs.version }}
+        run: |
+          echo "Version Tag: $VERSION_TAG"
+          echo "Version: $VERSION"
+          echo "set docker image name"
+          echo "DOCKER_IMAGE_NAME=$(echo $ORGANIZATION_NAME/$GH_REPO_NAME:$VERSION-$RELEASE_BRANCH_DOCKER_ALIAS)" >> $GITHUB_OUTPUT
+
+  build-push-image:
+    runs-on: ubuntu-latest
+    needs:
+      - generate-semver-tag-number
+      - create-image-name
+    env:
+      DOCKER_IMAGE_NAME: ${{ needs.create-image-name.outputs.docker_image_name }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: echo docker_image_name
+        run: echo "${{ env.DOCKER_IMAGE_NAME }}"
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Clone all required submodules manually (this is mainly due to permission problems if possible, avoiding using
+      # this workaround of cloning submodules would be ideal as it would avoid us download multiple "extra" repos.
+      - name: clone submodule
+        uses: actions/checkout@v3
+        with:
+          repository: cuemby/by-email-notification-sdk.git
+          ref: "master"
+          token: ${{ secrets.GH_TOKEN }}
+          path: by-email-notification-sdk
+
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_IMAGE_NAME }}
+
+  update-yaml-deployment:
+    runs-on: ubuntu-latest
+    needs:
+      - build-push-image
+      - create-image-name
+    env:
+      DOCKER_IMAGE_NAME: ${{ needs.create-image-name.outputs.docker_image_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+
+      - name: Run update YAML deployment script
+        id: run-yaml-script
+        run: |
+          SCRIPT_EXECUTABLE_PATH=gh-action-scripts/yaml-edition/edit-one-field/edit-one-field.bash 
+          DEPLOYMENT_FILE=k8s/staging/deployment.yaml
+          chmod +x $SCRIPT_EXECUTABLE_PATH
+          echo "Execute script $SCRIPT_EXECUTABLE_PATH"
+          $SCRIPT_EXECUTABLE_PATH -f $DEPLOYMENT_FILE -d -v ${{ needs.create-image-name.outputs.DOCKER_IMAGE_NAME }}
+          echo "DOCKER_IMAGE_NAME=${{ needs.create-image-name.outputs.DOCKER_IMAGE_NAME }}" >> $GITHUB_OUTPUT
+          echo "DEPLOYMENT_FILE=$DEPLOYMENT_FILE" >> $GITHUB_OUTPUT
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "${{ env.GH_USERNAME }}"
+          echo "will do LS"
+          ls -lA
+          git add ${{ steps.run-yaml-script.outputs.DEPLOYMENT_FILE }}
+          git commit -a -m "Bot: Update image tag \"${{ steps.run-yaml-script.outputs.DOCKER_IMAGE_NAME }}\" at deployment file \"${{ steps.run-yaml-script.outputs.DEPLOYMENT_FILE }}\""
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          branch: ${{ env.RELEASE_BRANCH }}
+
+  update-json-metadata:
+    runs-on: ubuntu-latest
+    needs:
+      - update-yaml-deployment
+      - create-image-name
+    env:
+      VARS_INFO_FILEPATH: promote-staging-vars-info.json
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+
+      - name: Update JSON metadata (in-place file edition).
+        run: |
+          echo "Updating all metadata located in \"$VARS_INFO_FILEPATH\""
+          echo "$(jq '.organization_name = "${{ env.ORGANIZATION_NAME }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.dockerhub_username = "${{ env.DOCKERHUB_USERNAME }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.gh_repo_owner = "${{ env.GH_REPO_OWNER }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.gh_repo_name =  "${{ env.GH_REPO_NAME  }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.gh_username = "${{ env.GH_USERNAME }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.release_branch = "${{ env.RELEASE_BRANCH }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.release_branch_docker_alias = "${{ env.RELEASE_BRANCH_DOCKER_ALIAS }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+          echo "$(jq '.full_release_docker_img_name = "${{ needs.create-image-name.outputs.DOCKER_IMAGE_NAME }}"' $VARS_INFO_FILEPATH)" > $VARS_INFO_FILEPATH
+
+      - name: Commit JSON file
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "${{ env.GH_USERNAME }}"
+          echo "will do LS"
+          ls -lA
+          git add $VARS_INFO_FILEPATH
+          git commit -a -m "Bot: Modify JSON file with updated values"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          branch: ${{ env.RELEASE_BRANCH }}
