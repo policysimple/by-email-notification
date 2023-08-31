@@ -7,8 +7,14 @@ const itemEmail = Joi.array().items(Joi.object().keys({
     email: Joi.string().email().required()
 }))
 
+const itemEmailOptional = Joi.array().items(Joi.object().keys({
+    name: Joi.string(),
+    email: Joi.string().email()
+}))
+
 exports.emailDataValidation = Joi.object().keys({
     emailData: Joi.object().keys({
+        from: itemEmailOptional,
         to: itemEmail,
         cc: itemEmail,
         bcc: itemEmail,
