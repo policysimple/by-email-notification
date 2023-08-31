@@ -12,7 +12,7 @@ const send = async (emailData, smtpData) => {
   const standarizedEmailData = standarize(emailData);
   const transporter = nodemailer.createTransport({
     host: smtpData.host,
-    secure: !smtpData.useSTARTTLS,
+    secure: !smtpData.useStarttls,
     opportunisticTLS: true,
     connectionTimeout: 20000,
     auth: {

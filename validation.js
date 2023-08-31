@@ -32,6 +32,6 @@ exports.smtpDataValidation = Joi.object().keys({
         pass: Joi.string().required(),
         host: Joi.string().required(),
         port: Joi.number().required(),
-        useSTARTTLS: Joi.boolean().required(),
+        useStarttls: Joi.boolean().required(),
     })
 })
