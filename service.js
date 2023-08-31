@@ -2,7 +2,7 @@ const Mali = require('mali');
 const path = require('path');
 const { error, log } = console;
 const { name, version } = require("./package.json");
-const { emailDataValidation } = require('./validation');
+const { emailDataValidation, smtpDataValidation } = require('./validation');
 const PROTO_PATH = path.resolve(__dirname, './node_modules/by-email-notification-sdk/proto/by/notificationemail/v1/by_email_notification.proto');
 const { send } = require(`./providers/customized/index`);
 
@@ -93,12 +93,17 @@ async function sendEmail(ctx) {
 
 const sendEmailWithCustomDomain = async (ctx) => {
     const data = ctx.req;
-    const emailData = ctx.req.emailData;
-    const validation = emailDataValidation.validate({emailData: emailData});
+    // const emailData = ctx.req.emailData;
+    const validationEmailData = emailDataValidation.validate({emailData: ctx.req.emailData});
+    const validationSmtpData = smtpDataValidation.validate({ smtpData: ctx.req.smtpData });
 
-    if (validation.error) {
-        log("error payload: ", validation.error)
-        throw new Error('Error in the payload');
+    if (validationEmailData.error) {
+        log("error EmailData payload: ", validationEmailData.error)
+        throw new Error('Error in the EmailData payload');
+    }
+    if (validationSmtpData.error) {
+        log("error SmtpData payload: ", validationSmtpData.error)
+        throw new Error('Error in the SmtpData payload');
     }
     try {
         const resultErr = await send(data["emailData"], data["smtpData"])

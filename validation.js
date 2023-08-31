@@ -25,3 +25,14 @@ exports.emailDataValidation = Joi.object().keys({
         html: Joi.string()
     })
 });
+
+
+exports.smtpDataValidation = Joi.object().keys({
+    smtpData: Joi.object().keys({
+        user: Joi.string().email().required(),
+        pass: Joi.string().required(),
+        host: Joi.string().required(),
+        port: Joi.number().required(),
+        useSTARTTLS: Joi.boolean().required(),
+    })
+})
