@@ -93,7 +93,6 @@ async function sendEmail(ctx) {
 
 const sendEmailWithCustomDomain = async (ctx) => {
     const data = ctx.req;
-    // const emailData = ctx.req.emailData;
     const validationEmailData = emailDataValidation.validate({emailData: ctx.req.emailData});
     const validationSmtpData = smtpDataValidation.validate({ smtpData: ctx.req.smtpData });
 
