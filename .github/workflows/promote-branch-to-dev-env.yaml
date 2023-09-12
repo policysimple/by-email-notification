@@ -81,13 +81,13 @@ jobs:
       - name: Check that all tags have been brought from remote
         run: |
           echo "Will show all Git tags for the \"$GH_REPO_NAME\" repo "
-          echo "$(git tag)"
+          echo "$(git tag -l 'v*.*.*-${{ env.RELEASE_BRANCH_DOCKER_ALIAS }}*')"
       - name: semver
         id: semver
         uses: paulhatch/semantic-version@v5.0.3
         with:
-          tag_prefix: "v"
-          version_format: "v${major}.${minor}.${patch}" # This oftenly fails so "increment" will be used instead. If increment fails, use this line instead...
+          tag_prefix: "v*.*.*-${{ env.RELEASE_BRANCH_DOCKER_ALIAS }}*"
+          version_format: "v${major}.${minor}.${patch}-${{ env.RELEASE_BRANCH_DOCKER_ALIAS }}${increment}" # This oftenly fails so "increment" will be used instead. If increment fails, use this line instead...
           # version_format: "v${major}.${minor}.${increment}" # This method should be used only if the method above is producing a lot of problems.
           major_pattern: "(MAJOR)"
           minor_pattern: "(MINOR)"
