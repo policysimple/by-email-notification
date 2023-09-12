@@ -7,8 +7,14 @@ const itemEmail = Joi.array().items(Joi.object().keys({
     email: Joi.string().email().required()
 }))
 
+const itemEmailOptional = Joi.array().items(Joi.object().keys({
+    name: Joi.string(),
+    email: Joi.string().email()
+}))
+
 exports.emailDataValidation = Joi.object().keys({
     emailData: Joi.object().keys({
+        from: itemEmailOptional,
         to: itemEmail,
         cc: itemEmail,
         bcc: itemEmail,
@@ -19,3 +25,13 @@ exports.emailDataValidation = Joi.object().keys({
         html: Joi.string()
     })
 });
+
+exports.smtpDataValidation = Joi.object().keys({
+    smtpData: Joi.object().keys({
+        user: Joi.string().email().required(),
+        pass: Joi.string().required(),
+        host: Joi.string().required(),
+        port: Joi.number().required(),
+        useStarttls: Joi.boolean().required(),
+    })
+})
