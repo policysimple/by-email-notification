@@ -6,5 +6,5 @@
   "gh_username": "andres06-hub",
   "release_branch": "dev",
   "release_branch_docker_alias": "dev",
-  "full_release_docker_img_name": "cuemby/by-email-notification:v0.0.1-dev85-dev"
+  "full_release_docker_img_name": "cuemby/by-email-notification:v0.0.1-dev89-dev"
 }
