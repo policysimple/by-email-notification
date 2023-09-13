@@ -1,0 +1,3 @@
+[submodule "by-email-notification-sdk"]
+	path = by-email-notification-sdk
+	url = git@github.com:cuemby/by-email-notification-sdk.git
