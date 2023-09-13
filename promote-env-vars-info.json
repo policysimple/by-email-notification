@@ -3,8 +3,8 @@
   "dockerhub_username": "cuembybot",
   "gh_repo_owner": "cuemby",
   "gh_repo_name": "by-email-notification",
-  "gh_username": "andres06-hub",
+  "gh_username": "IgorDevCuemby",
   "release_branch": "dev",
   "release_branch_docker_alias": "dev",
-  "full_release_docker_img_name": "cuemby/by-email-notification:v0.0.1-dev89-dev"
+  "full_release_docker_img_name": "cuemby/by-email-notification:v0.0.1-dev93-dev"
 }
