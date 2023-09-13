@@ -106,7 +106,7 @@ const sendEmailWithCustomDomain = async (ctx) => {
     }
     try {
         const resultErr = await send(data["emailData"], data["smtpData"])
-        if (resultErr != null) throw new Error(result);
+        if (resultErr != null) throw new Error(resultErr);
     } catch (err) {
         error('Error in sending mail: ', err)
         return ctx.res = { status: 'error', message: 'The email was not sent', info: null, error: err.message };
