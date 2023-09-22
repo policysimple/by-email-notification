@@ -2,8 +2,9 @@ const Mali = require('mali');
 const path = require('path');
 const { error, log } = console;
 const { name, version } = require("./package.json");
-const { emailDataValidation } = require('./validation');
+const { emailDataValidation, smtpDataValidation } = require('./validation');
 const PROTO_PATH = path.resolve(__dirname, './node_modules/by-email-notification-sdk/proto/by/notificationemail/v1/by_email_notification.proto');
+const { send } = require(`./providers/customized/index`);
 
 const {
     PORT,
@@ -90,9 +91,34 @@ async function sendEmail(ctx) {
 
 }
 
+const sendEmailWithCustomDomain = async (ctx) => {
+    const data = ctx.req;
+    const validationEmailData = emailDataValidation.validate({emailData: ctx.req.emailData});
+    const validationSmtpData = smtpDataValidation.validate({ smtpData: ctx.req.smtpData });
+
+    if (validationEmailData.error) {
+        log("error EmailData payload: ", validationEmailData.error)
+        throw new Error('Error in the EmailData payload');
+    }
+    if (validationSmtpData.error) {
+        log("error SmtpData payload: ", validationSmtpData.error)
+        throw new Error('Error in the SmtpData payload');
+    }
+    try {
+        const resultErr = await send(data["emailData"], data["smtpData"])
+        if (resultErr != null) throw new Error(resultErr);
+    } catch (err) {
+        error('Error in sending mail: ', err)
+        return ctx.res = { status: 'error', message: 'The email was not sent', info: null, error: err.message };
+    }
+    log('Successful send!')
+    return ctx.res = { status: 'success', message: 'The message was sent', info: { send: true }, error: null }
+} 
+
 function main() {
     const app = new Mali(PROTO_PATH)
     app.use({ sendEmail });
+    app.use({ sendEmailWithCustomDomain });
     app.start(`0.0.0.0:${PORT}`);
     log(`service ${name}@${version} is running by port ${PORT}`);
 }
