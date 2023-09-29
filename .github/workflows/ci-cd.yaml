@@ -1,0 +1,103 @@
+name: 🔄 Versioning & Deployment
+
+env:
+  DOCKERHUB_USER: "cuembybot"
+  REPO_DEVOPS: "willmendezcuemby/ccp-devops"
+  REPO_GITOPS: "willmendezcuemby/gitops-ccp"
+  GITOPS_FILE_PATH: "overlays/by-email-notification/version_info.json"
+  ORG_NAME: 'cuemby'
+  METADATA_PATH: 'overlays/by-email-notification/version_info.json'
+  DEPLOYMENT_PATCH_PATH: 'overlays/by-email-notification/dev'
+  DISPATCH_COMMIT_MSG: 'Manual Dispatch to test the versioning action'
+
+on:
+  workflow_dispatch:
+    inputs:
+      sourceBranch:
+        description: 'Source branch'
+        required: true
+        default: 'feature-branch'
+      targetBranch:
+        description: 'Target branch'
+        required: true
+        default: 'main'
+      
+
+jobs:
+  versioning_job:
+    runs-on: ubuntu-latest
+    outputs:
+      success: ${{ steps.versioning_step.outputs.success }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Checkout devops repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.REPO_DEVOPS }}
+          token: ${{ secrets.DEVOPS_TOKEN }}
+          path: devops_repo
+      
+      - name: Versioning step
+        uses: ./devops_repo/.github/actions/semver-management
+        with:
+          GH_TOKEN: ${{ secrets.DEVOPS_TOKEN }}
+          EXTERNAL_REPO: ${{ env.REPO_GITOPS }}
+          EXTERNAL_REPO_FILE_PATH: ${{ env.GITOPS_FILE_PATH }}
+          SOURCE_BRANCH: ${{ github.event.inputs.sourceBranch }}
+          TARGET_BRANCH: ${{ github.event.inputs.targetBranch }}
+          COMMIT_MESSAGE: ${{ env.DISPATCH_COMMIT_MSG }}
+
+  deploy_job:
+    needs: versioning_job
+    if: needs.versioning_job.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Checkout devops repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.REPO_DEVOPS }}
+          token: ${{ secrets.DEVOPS_TOKEN }}
+          path: devops_repo
+
+      - name: 📦 Clone "cuemby/ccp-sdk" submodule
+        uses: actions/checkout@v3
+        with:
+          repository: cuemby/ccp-sdk.git
+          ref: "dev"
+          token: ${{ secrets.DEVOPS_TOKEN }}
+          path: ccp-sdk
+
+      - name: 📦 Clone "cuemby/by-go-utils" submodule
+        uses: actions/checkout@v3
+        with:
+          repository: cuemby/by-go-utils.git
+          ref: "dev-1"
+          token: ${{ secrets.DEVOPS_TOKEN }}
+          path: by-go-utils
+
+      - name: 🛠️ Update go.mod for submodules
+        run: |
+          echo "replace github.com/cuemby/ccp-sdk  => ./ccp-sdk" >> go.mod
+          echo "replace github.com/cuemby/by-go-utils  => ./by-go-utils" >> go.mod
+        shell: bash
+
+
+      - name: Deploy to Docker and Update Kustomize
+        uses: ./devops_repo/.github/actions/version-upgrade-action
+        with:
+          gh_token: ${{ secrets.DEVOPS_TOKEN }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          dockerhub_username: ${{ env.DOCKERHUB_USER }}
+          organization_name: ${{ env.ORG_NAME }}
+          external_repo: ${{ env.REPO_GITOPS }}
+          metadata_path: ${{ env.METADATA_PATH }}
+          deployment_overlay_path: ${{ env.DEPLOYMENT_PATCH_PATH }}
+          gh_repo_name: ${{ github.event.repository.name }}
+          release_branch_docker_alias: ${{ github.event.inputs.targetBranch }}
+
+    
