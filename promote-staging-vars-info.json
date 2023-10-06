@@ -6,5 +6,5 @@
   "gh_username": "andres06-hub",
   "release_branch": "staging",
   "release_branch_docker_alias": "staging",
-  "full_release_docker_img_name": "cuemby/by-email-notification:v0.0.11-staging"
+  "full_release_docker_img_name": "cuemby/by-email-notification:v0.0.10-staging"
 }
