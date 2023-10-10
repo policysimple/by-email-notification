@@ -9,7 +9,7 @@ env:
   METADATA_PATH: 'overlays/by-email-notification/version_info.json'
   DEPLOYMENT_PATCH_PATH: 'overlays/by-email-notification/dev'
   DISPATCH_COMMIT_MSG: 'Manual Dispatch to test the versioning action'
-
+  DOCKER_FILE_PATH: './Dockerfile'
 on:
   workflow_dispatch:
     inputs:
@@ -64,28 +64,13 @@ jobs:
           token: ${{ secrets.DEVOPS_TOKEN }}
           path: devops_repo
 
-      - name: 📦 Clone "cuemby/ccp-sdk" submodule
+      - name: clone submodule
         uses: actions/checkout@v3
         with:
-          repository: cuemby/ccp-sdk.git
-          ref: "dev"
-          token: ${{ secrets.DEVOPS_TOKEN }}
-          path: ccp-sdk
-
-      - name: 📦 Clone "cuemby/by-go-utils" submodule
-        uses: actions/checkout@v3
-        with:
-          repository: cuemby/by-go-utils.git
-          ref: "dev-1"
-          token: ${{ secrets.DEVOPS_TOKEN }}
-          path: by-go-utils
-
-      - name: 🛠️ Update go.mod for submodules
-        run: |
-          echo "replace github.com/cuemby/ccp-sdk  => ./ccp-sdk" >> go.mod
-          echo "replace github.com/cuemby/by-go-utils  => ./by-go-utils" >> go.mod
-        shell: bash
-
+          repository: cuemby/by-email-notification-sdk.git
+          ref: "master"
+          token: ${{ secrets.GH_TOKEN }}
+          path: by-email-notification-sdk
 
       - name: Deploy to Docker and Update Kustomize
         uses: ./devops_repo/.github/actions/version-upgrade-action
@@ -99,5 +84,4 @@ jobs:
           deployment_overlay_path: ${{ env.DEPLOYMENT_PATCH_PATH }}
           gh_repo_name: ${{ github.event.repository.name }}
           release_branch_docker_alias: ${{ github.event.inputs.targetBranch }}
-
-    
+          dockerfile_path: ${{ env.DOCKERFILE_PATH }}
