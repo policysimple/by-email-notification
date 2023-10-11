@@ -7,7 +7,7 @@ env:
   GITOPS_FILE_PATH: "overlays/ccp-by-email-notification/version_info.json"
   ORG_NAME: 'cuemby'
   METADATA_PATH: 'overlays/ccp-by-email-notification/version_info.json'
-  DEPLOYMENT_PATCH_PATH: 'overlays/by-email-notification/dev'
+  DEPLOYMENT_PATCH_PATH: 'overlays/ccp-by-email-notification/dev'
   DISPATCH_COMMIT_MSG: 'Manual Dispatch to test the versioning action'
   DOCKER_FILE_PATH: './Dockerfile'
 on:
