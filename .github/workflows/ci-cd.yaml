@@ -1,5 +1,12 @@
 name: 🔄 Versioning & Deployment
 
+
+
+
+on:
+  pull_request:
+    types: [closed]
+
 env:
   DOCKERHUB_USER: "cuembybot"
   REPO_DEVOPS: "willmendezcuemby/ccp-devops"
@@ -7,30 +14,28 @@ env:
   GITOPS_FILE_PATH: "overlays/ccp-by-email-notification/version_info.json"
   ORG_NAME: 'cuemby'
   METADATA_PATH: 'overlays/ccp-by-email-notification/version_info.json'
-  DEPLOYMENT_PATCH_PATH: 'overlays/ccp-by-email-notification/dev'
+  DEPLOYMENT_PATCH_PATH: 'overlays/ccp-by-email-notification/${{ github.base_ref }}'
   DISPATCH_COMMIT_MSG: 'Manual Dispatch to test the versioning action'
   DOCKER_FILE_PATH: './Dockerfile'
-on:
-  workflow_dispatch:
-    inputs:
-      sourceBranch:
-        description: 'Source branch'
-        required: true
-        default: 'feature-branch'
-      targetBranch:
-        description: 'Target branch'
-        required: true
-        default: 'main'
-      
 
+      
 jobs:
   versioning_job:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
       success: ${{ steps.versioning_step.outputs.success }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Get commit message
+        id: get_commit_message
+        run: |
+          commit_message=$(git log -1 --pretty=format:%s)
+          echo "Commit message: $commit_message"
+          echo "commit_message=$commit_message" >> $GITHUB_ENV
+          echo "::set-output name=commit_message::$commit_message"
 
       - name: Checkout devops repository
         uses: actions/checkout@v3
@@ -45,9 +50,27 @@ jobs:
           GH_TOKEN: ${{ secrets.DEVOPS_TOKEN }}
           EXTERNAL_REPO: ${{ env.REPO_GITOPS }}
           EXTERNAL_REPO_FILE_PATH: ${{ env.GITOPS_FILE_PATH }}
-          SOURCE_BRANCH: ${{ github.event.inputs.sourceBranch }}
-          TARGET_BRANCH: ${{ github.event.inputs.targetBranch }}
-          COMMIT_MESSAGE: ${{ env.DISPATCH_COMMIT_MSG }}
+          SOURCE_BRANCH: ${{ github.head_ref }}
+          TARGET_BRANCH: ${{ github.base_ref }}
+          COMMIT_MESSAGE: ${{ steps.get_commit_message.outputs.commit_message }}
+
+
+      - name: Checkout devops repository
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.REPO_DEVOPS }}
+          token: ${{ secrets.DEVOPS_TOKEN }}
+          path: devops_repo
+      
+      - name: Versioning step
+        uses: ./devops_repo/.github/actions/semver-management
+        with:
+          GH_TOKEN: ${{ secrets.DEVOPS_TOKEN }}
+          EXTERNAL_REPO: ${{ env.REPO_GITOPS }}
+          EXTERNAL_REPO_FILE_PATH: ${{ env.GITOPS_FILE_PATH }}
+          SOURCE_BRANCH: ${{ github.head_ref }}
+          TARGET_BRANCH: ${{ github.base_ref }}
+          COMMIT_MESSAGE: ${{ steps.get_commit_message.outputs.commit_message }}
 
   deploy_job:
     needs: versioning_job
@@ -80,8 +103,7 @@ jobs:
           dockerhub_username: ${{ env.DOCKERHUB_USER }}
           organization_name: ${{ env.ORG_NAME }}
           external_repo: ${{ env.REPO_GITOPS }}
-          metadata_path: ${{ env.METADATA_PATH }}
-          deployment_overlay_path: ${{ env.DEPLOYMENT_PATCH_PATH }}
+          metadata_path: envs/ccp-by-email-notification/ccp-${{ github.event.pull_request.base.ref }}/version_info.json
+          deployment_overlay_path: envs/ccp-by-email-notification/ccp-${{ github.event.pull_request.base.ref }}
           gh_repo_name: ${{ github.event.repository.name }}
-          release_branch_docker_alias: ${{ github.event.inputs.targetBranch }}
-          dockerfile_path: ${{ env.DOCKERFILE_PATH }}
+          release_branch_docker_alias: ${{ github.base_ref }}
