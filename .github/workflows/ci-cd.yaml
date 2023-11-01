@@ -7,16 +7,17 @@ on:
   pull_request:
     types: [closed]
 
+
 env:
   DOCKERHUB_USER: "cuembybot"
   REPO_DEVOPS: "willmendezcuemby/ccp-devops"
   REPO_GITOPS: "willmendezcuemby/gitops-ccp"
-  GITOPS_FILE_PATH: "overlays/ccp-by-email-notification/version_info.json"
+  GITOPS_FILE_PATH: "envs/ccp-by-email-notification/ccp-${{github.base_ref}}/version_info.json"
   ORG_NAME: 'cuemby'
-  METADATA_PATH: 'overlays/ccp-by-email-notification/version_info.json'
-  DEPLOYMENT_PATCH_PATH: 'overlays/ccp-by-email-notification/${{ github.base_ref }}'
-  DISPATCH_COMMIT_MSG: 'Manual Dispatch to test the versioning action'
-  DOCKER_FILE_PATH: './Dockerfile'
+  METADATA_PATH: 'envs/ccp-by-email-notification/ccp-${{github.base_ref}}/version_info.json'
+  DEPLOYMENT_PATCH_PATH: 'envs/ccp-by-email-notification/ccp-${{github.base_ref}}/'
+  DOCKERFILE_PATH: './rpc/Dockerfile'
+
 
       
 jobs:
@@ -100,10 +101,11 @@ jobs:
         with:
           gh_token: ${{ secrets.DEVOPS_TOKEN }}
           dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          dockerfile_path: ${{ env.DOCKERFILE_PATH }}
           dockerhub_username: ${{ env.DOCKERHUB_USER }}
           organization_name: ${{ env.ORG_NAME }}
           external_repo: ${{ env.REPO_GITOPS }}
-          metadata_path: envs/ccp-by-email-notification/ccp-${{ github.event.pull_request.base.ref }}/version_info.json
+          metadata_path: envs/by-email-notification/ccp-${{ github.event.pull_request.base.ref }}/version_info.json
           deployment_overlay_path: envs/ccp-by-email-notification/ccp-${{ github.event.pull_request.base.ref }}
           gh_repo_name: ${{ github.event.repository.name }}
           release_branch_docker_alias: ${{ github.base_ref }}
