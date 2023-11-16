@@ -1,64 +1,43 @@
-name: 🔄 Versioning & Deployment
-
-
-
-
+name: 🔄 Versioning & Deployment!!!!!
 on:
   pull_request:
+    branches:
+      - dev
     types: [closed]
 
+
 jobs:
+
   versioning_job:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
-      success: ${{ steps.versioning_step.outputs.success }}
+      versioning_success: ${{ steps.versioning_step.outputs.success }}
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Get commit message
-        id: get_commit_message
+      - id: extract_commit_message
         run: |
-          commit_message=$(git log -1 --pretty=format:%s)
-          echo "Commit message: $commit_message"
-          echo "commit_message=$commit_message" >> $GITHUB_ENV
+          echo "commit_message=$(git log -1 --pretty=format:%s)" >> $GITHUB_ENV
           echo "::set-output name=commit_message::$commit_message"
 
-      - name: Checkout devops repository
+      - name: Checkout devops repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ env.REPO_DEVOPS }}
+          repository: ${{ vars.DEVOPS_PATH }}
           token: ${{ secrets.DEVOPS_TOKEN }}
           path: devops_repo
-      
-      - name: Versioning step
-        uses: ./devops_repo/.github/actions/semver-management
-        with:
-          GH_TOKEN: ${{ secrets.DEVOPS_TOKEN }}
-          EXTERNAL_REPO: ${{ env.REPO_GITOPS }}
-          EXTERNAL_REPO_FILE_PATH: ${{ env.GITOPS_FILE_PATH }}
-          SOURCE_BRANCH: ${{ github.head_ref }}
-          TARGET_BRANCH: ${{ github.base_ref }}
-          COMMIT_MESSAGE: ${{ steps.get_commit_message.outputs.commit_message }}
 
 
-      - name: Checkout devops repository
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ env.REPO_DEVOPS }}
-          token: ${{ secrets.DEVOPS_TOKEN }}
-          path: devops_repo
-      
-      - name: Versioning step
-        uses: ./devops_repo/.github/actions/semver-management
+      - uses: ./devops_repo/.github/actions/semver-management
         with:
           GH_TOKEN: ${{ secrets.DEVOPS_TOKEN }}
-          EXTERNAL_REPO: ${{ env.REPO_GITOPS }}
-          EXTERNAL_REPO_FILE_PATH: ${{ env.GITOPS_FILE_PATH }}
+          EXTERNAL_REPO: ${{ vars.GITOPS_PATH }}
+          EXTERNAL_REPO_FILE_PATH: "envs/${{ github.event.repository.name }}/ccp-${{ github.event.pull_request.base.ref }}/version_info.json"
           SOURCE_BRANCH: ${{ github.head_ref }}
           TARGET_BRANCH: ${{ github.base_ref }}
-          COMMIT_MESSAGE: ${{ steps.get_commit_message.outputs.commit_message }}
+          COMMIT_MESSAGE: ${{ steps.extract_commit_message.outputs.commit_message }}
 
   deploy_job:
     needs: versioning_job
@@ -68,10 +47,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Checkout devops repository
+      - name: Checkout devops repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ env.REPO_DEVOPS }}
+          repository: ${{ vars.DEVOPS_PATH }}
           token: ${{ secrets.DEVOPS_TOKEN }}
           path: devops_repo
 
@@ -83,16 +62,16 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           path: by-email-notification-sdk
 
-      - name: Deploy to Docker and Update Kustomize
-        uses: ./devops_repo/.github/actions/version-upgrade-action
+      - uses: ./devops_repo/.github/actions/version-upgrade-action
         with:
           gh_token: ${{ secrets.DEVOPS_TOKEN }}
           dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-          dockerfile_path: ${{ env.DOCKERFILE_PATH }}
-          dockerhub_username: ${{ env.DOCKERHUB_USER }}
-          organization_name: ${{ env.ORG_NAME }}
-          external_repo: ${{ env.REPO_GITOPS }}
-          metadata_path: envs/by-email-notification/ccp-${{ github.event.pull_request.base.ref }}/version_info.json
-          deployment_overlay_path: envs/ccp-by-email-notification/ccp-${{ github.event.pull_request.base.ref }}
+          dockerfile_path: "./rpc/Dockerfile"
+          dockerhub_username: ${{ vars.USER_REGISTRY }}
+          organization_name: ${{ vars.ORGANIZATION_NAME }}
+          external_repo: ${{ vars.GITOPS_PATH }}
+          metadata_path: "envs/${{ github.event.repository.name }}/ccp-${{ github.event.pull_request.base.ref }}/version_info.json"
+          deployment_overlay_path: "envs/${{ github.event.repository.name }}/ccp-${{ github.event.pull_request.base.ref }}"
           gh_repo_name: ${{ github.event.repository.name }}
           release_branch_docker_alias: ${{ github.base_ref }}
+
