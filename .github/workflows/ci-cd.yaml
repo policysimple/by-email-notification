@@ -66,7 +66,7 @@ jobs:
         with:
           gh_token: ${{ secrets.DEVOPS_TOKEN }}
           dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
-          dockerfile_path: "./rpc/Dockerfile"
+          dockerfile_path: "./Dockerfile"
           dockerhub_username: ${{ vars.USER_REGISTRY }}
           organization_name: ${{ vars.ORGANIZATION_NAME }}
           external_repo: ${{ vars.GITOPS_PATH }}
