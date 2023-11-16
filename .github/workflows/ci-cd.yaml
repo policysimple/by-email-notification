@@ -7,19 +7,6 @@ on:
   pull_request:
     types: [closed]
 
-
-env:
-  DOCKERHUB_USER: "cuembybot"
-  REPO_DEVOPS: "willmendezcuemby/ccp-devops"
-  REPO_GITOPS: "willmendezcuemby/gitops-ccp"
-  GITOPS_FILE_PATH: "envs/ccp-by-email-notification/ccp-${{github.base_ref}}/version_info.json"
-  ORG_NAME: 'cuemby'
-  METADATA_PATH: 'envs/ccp-by-email-notification/ccp-${{github.base_ref}}/version_info.json'
-  DEPLOYMENT_PATCH_PATH: 'envs/ccp-by-email-notification/ccp-${{github.base_ref}}/'
-  DOCKERFILE_PATH: './rpc/Dockerfile'
-
-
-      
 jobs:
   versioning_job:
     if: github.event.pull_request.merged == true
