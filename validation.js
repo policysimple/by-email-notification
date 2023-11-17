@@ -28,7 +28,7 @@ exports.emailDataValidation = Joi.object().keys({
 
 exports.smtpDataValidation = Joi.object().keys({
     smtpData: Joi.object().keys({
-        user: Joi.string().email().required(),
+        user: Joi.string().email(),
         pass: Joi.string().required(),
         host: Joi.string().required(),
         port: Joi.number().required(),
