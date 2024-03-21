@@ -15,8 +15,8 @@ exports.standarize = (payload) => {
     returnData.cc = arrayToStrEmailFormat(payload.cc, ',', false);
   }
 
-  if (payload.bcc) {
-    returnData.bcc = arrayToStrEmailFormat(payload.bcc, ',', false);
+  if (payload.bbc) {
+    returnData.bcc = arrayToStrEmailFormat(payload.bbc, ',', false);
   }
 
   if (payload.replyTo) {
