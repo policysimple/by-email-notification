@@ -17,7 +17,7 @@ exports.emailDataValidation = Joi.object().keys({
         from: itemEmailOptional,
         to: itemEmail,
         cc: itemEmail,
-        bcc: itemEmail,
+        bbc: itemEmail,
         replyTo: itemEmail,
         subject: Joi.string().required(),
         tag: Joi.string(),

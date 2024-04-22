@@ -4,6 +4,7 @@ on:
     branches:
       - dev
       - production
+      - staging
     types: [closed]
 
 jobs:
