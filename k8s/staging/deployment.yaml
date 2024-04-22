@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: email-service
-          image: cuemby/by-email-notification:v0.0.12-staging
+          image: cuemby/by-email-notification:v0.0.13-staging
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 50051
